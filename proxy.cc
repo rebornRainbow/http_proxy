@@ -38,8 +38,11 @@ HTTPProxy::HTTPProxy(int argc, char *argv[]) throw (HTTPProxyException) :
   usingSpecificProxyPortNumber(false), proxyPortNumber(computeDefaultPortForUser()), 
   listenfd(kUnitializedSocket) {
   try {
+    //配置参数列表
     configureFromArgumentList(argc, argv);
+    //创建服务器套接字
     createServerSocket();
+    //配置服务器套接字
     configureServerSocket();
   } catch (const HTTPProxyException& hpe) {
     if (listenfd != kUnitializedSocket) {
@@ -58,7 +61,8 @@ HTTPProxy::HTTPProxy(int argc, char *argv[]) throw (HTTPProxyException) :
  * proxied on to the origin server.
  */
 void HTTPProxy::acceptAndProxyRequest() throw (HTTPProxyException) {
-  struct sockaddr_in clientAddr;
+  //接受客户端的请求，并获取客户端的地址
+  struct sockaddr_in clientAddr;//客户端的地址
   socklen_t clientAddrSize = sizeof(clientAddr);
   int connectionfd = accept(listenfd, (struct sockaddr *) &clientAddr, &clientAddrSize);
   if (connectionfd < 0) {
@@ -67,6 +71,7 @@ void HTTPProxy::acceptAndProxyRequest() throw (HTTPProxyException) {
       ("Call to accept failed to return a valid client socket.");
   }
   
+  //让调度其器调度请求
   const char *clientIPAddress = getClientIPAddress(&clientAddr);
   try {
     scheduler.scheduleRequest(connectionfd, clientIPAddress);

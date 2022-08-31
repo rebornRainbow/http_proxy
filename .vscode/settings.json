@@ -1,6 +1,15 @@
 {
   "files.associations": {
     "type_traits": "cpp",
-    "iostream": "cpp"
+    "iostream": "cpp",
+    "bitset": "cpp",
+    "exception": "cpp",
+    "limits": "cpp",
+    "new": "cpp",
+    "optional": "cpp",
+    "stdexcept": "cpp",
+    "functional": "cpp",
+    "regex": "cpp",
+    "typeinfo": "cpp"
   }
 }

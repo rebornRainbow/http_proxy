@@ -23,8 +23,10 @@ void HTTPRequest::ingestRequestLine(istream& instream) throw (HTTPBadRequestExce
   istringstream iss(requestLine);
   iss >> method >> url >> protocol;
   server = url;
+  // cout << "request log 原先:" << server << endl;
   size_t pos = server.find(kProtocolPrefix);
-  server.erase(0, kProtocolPrefix.size());
+  if (pos != string::npos) 
+    server.erase(0, kProtocolPrefix.size());
   pos = server.find('/');
   if (pos == string::npos) {
     // url came in as something like http://www.google.com, without the trailing /
@@ -40,7 +42,7 @@ void HTTPRequest::ingestRequestLine(istream& instream) throw (HTTPBadRequestExce
   if (pos == string::npos) return;
   port = strtol(server.c_str() + pos + 1, NULL, 0); // assume port is well-formed
   server.erase(pos);
-
+  // cout << "request log:" << server << endl;
 }
 
 void HTTPRequest::ingestHeader(istream& instream, const string& clientIPAddress) {

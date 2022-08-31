@@ -10,7 +10,7 @@
 
 #include "proxy.h"
 #include "proxy-exception.h"
-#include "ostreamlock.h"
+#include "ostreamlock.h"//为了让流线程安全
 
 using namespace std;
 
@@ -61,6 +61,8 @@ static void handleBrokenPipes()
  * ----------------------------
  * Configures the entire system to quit on
  * ctrl-c and ctrl-z.
+ * 配置系统对于退出的处理
+ * ctrl-c 和 ctrl-z
  */
 static void handleKillRequests()
 {
@@ -82,10 +84,13 @@ static void handleKillRequests()
 static const int kFatalHTTPProxyError = 1;
 int main(int argc, char *argv[])
 {
+  //处理退出
   handleKillRequests();
+  //处理管道损坏
   handleBrokenPipes();
   try
   {
+    //配置代理
     HTTPProxy proxy(argc, argv);
     cout << "Listening for all incoming traffic on port " << proxy.getPortNumber() << "." << endl;
     if (proxy.isUsingProxy())
@@ -95,6 +100,7 @@ int main(int argc, char *argv[])
     }
     while (true)
     {
+      //接受并代理请求
       proxy.acceptAndProxyRequest();
     }
   }
