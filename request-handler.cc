@@ -21,15 +21,26 @@ class Log
    }
 };
 
+/**
+ * @brief 
+ * Construct a new HTTPRequestHandler::HTTPRequestHandler object
+ * 配置私有成员 HTTPBlacklist
+ */
+HTTPRequestHandler::HTTPRequestHandler()
+{
+
+  blacklist.addToBlacklist("./slink/blocked-domains.txt");
+}
 
 void getClientRequest(const pair<int, string>& connection,
   HTTPRequest & client_request,
   iosockstream &ss)
 {
   
-  // cout << "处理之前这是获取到的请求" << client_request << endl;
+  cout << "处理之前这是获取到的请求" << client_request << endl;
   /*这是获取客户端的请求，为了获取真正的回应要吧这个转给请求的服务器*/
   // 在获取客户端的请求行时需要捕获错误
+  
   try{
 		client_request.ingestRequestLine(ss);
 	} catch (const HTTPBadRequestException& hpe) {
@@ -59,17 +70,41 @@ void getClientRequest(const pair<int, string>& connection,
 }
 
 
-void getServerResponse(HTTPRequest & client_request,iosockstream &ss)
+void getServerResponse(HTTPCache &cache,HTTPBlacklist &blacklist,HTTPRequest & client_request,iosockstream &ss)
 {
   // Log log;
   // log.log_print("开始");
   //创建客户端的文件描述符号
-  //
+  
 
+  cout << oslock << client_request.getMethod() << " "
+  << client_request.getURL() << " "
+  << client_request.getProtocol() << endl << osunlock;
   // cout << "打开成功!!!\n" << endl;
   string host = client_request.getServer();
   unsigned short port = client_request.getPort();
   // log.log_print(host);
+
+  /**
+   * @brief 里程碑2
+   * 检查访问的内容是否是黑名单的内容，
+   * 如果是返回404
+   * 
+   */
+    if(!blacklist.serverIsAllowed(client_request.getURL()))
+    {
+      //服务器打不开应该返回
+      HTTPResponse response404;
+      response404.setResponseCode(404);
+      response404.setProtocol("HTTP/1.0");
+      response404.setPayload("Forbidden Content");
+      cout << "禁止访问" << endl;
+      ss  << response404 << endl;
+      ss.flush();
+      return;
+    }
+
+
   int serverfd = createClientSocket(host,port);
   
   if(serverfd == -1)
@@ -100,14 +135,41 @@ void getServerResponse(HTTPRequest & client_request,iosockstream &ss)
      * 改正：
      *  以后对与各种请求要对错误进行处理
      */
+  HTTPResponse response;
+  /**
+   * 里程碑 2
+   * 先检查是否有一个有效的缓存，如果有的
+   * 直接将缓存中的回应返回
+   */
+
+  if(cache.containsCacheEntry(client_request,response))
+  {
+    cout << "存在缓存" << endl;
+    ss  << response << endl;
+    ss.flush();
+    return;
+  }
+  
+
   serverSs << client_request << endl;//这里是导致出错的原因
   
   serverSs.flush();//向服务器发送文件请求。
   // log.log_print("请求发送完成");
   // //接受来自服务器的回应并且准发给客户端
-  HTTPResponse response;
+  
   response.ingestResponseHeader(serverSs);
   response.ingestPayload(serverSs);
+
+  /**
+   * 里程碑2 检查是否可以缓存
+   * 如果可以就加入缓存
+   */
+  if(cache.shouldCache(client_request,response))
+  {
+    cout << "可以缓存" << endl;
+    cache.cacheEntry(client_request,response);
+  }
+
   // cout << response << endl;
   ss  << response << endl;
   ss.flush();
@@ -127,7 +189,7 @@ void HTTPRequestHandler::serviceRequest(const pair<int, string>& connection) thr
   /*这是获取客户端的请求，为了获取真正的回应要吧这个转给请求的服务器*/
   getClientRequest(connection,client_request,ss);
   /*需要获取服务器的回应，并且发送回客户端**/
-  getServerResponse(client_request,ss);
+  getServerResponse(cache,blacklist,client_request,ss);
 
 
 }

@@ -62,6 +62,14 @@ void HTTPCache::clear() {
   cout << "done!" << endl;
 }
 
+/**
+ * @brief 
+ * 得到请求和回应后检查是否应该缓存
+ * @param request 
+ * @param response 
+ * @return true 
+ * @return false 
+ */
 bool HTTPCache::shouldCache(const HTTPRequest& request, const HTTPResponse& response) const {
   return maxAge != 0 &&
     request.getMethod() == "GET" && 
@@ -69,6 +77,16 @@ bool HTTPCache::shouldCache(const HTTPRequest& request, const HTTPResponse& resp
     response.permitsCaching();
 }
 
+/**
+ * @brief 
+ * 先根据请求检查这个请求是否已经缓存了
+ * 如果缓存了就直接从缓存中拿到
+ * 
+ * @param request 
+ * @param response 
+ * @return true 
+ * @return false 
+ */
 bool HTTPCache::containsCacheEntry(const HTTPRequest& request, HTTPResponse& response) const {
   if (maxAge == 0) return false; // maxAge of 0 means nothing is in the cache and we're not caching anything
   if (request.getMethod() != "GET") return false;
@@ -108,6 +126,12 @@ bool HTTPCache::containsCacheEntry(const HTTPRequest& request, HTTPResponse& res
 
 static string kCreateHeader = "created@";
 static string kExpirationHeader = "expires@";
+/**
+ * @brief 
+ * 根据请求检查设置缓存信息，并且吧回应缓存到缓存中
+ * @param request 
+ * @param response 
+ */
 void HTTPCache::cacheEntry(const HTTPRequest& request, const HTTPResponse& response) {
   string requestHash = hashRequestAsString(request);
   int ttl = response.getTTL();

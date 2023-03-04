@@ -41,6 +41,7 @@ class HTTPBlacklist {
  * -----------------------
  * Returns true if and only if access to the the 
  * identified server (i.e www.facebook.com) is permitted. 
+ * 只有服务器可以访问才返回真
  */
   bool serverIsAllowed(const std::string& server) const;
 
