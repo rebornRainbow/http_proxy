@@ -78,7 +78,9 @@ void getClientRequest(const pair<int, string>& connection,
 }
 
 
-void getServerResponse(HTTPCache &cache,HTTPBlacklist &blacklist,HTTPRequest & client_request,iosockstream &ss)
+void getServerResponse(HTTPCache &cache,HTTPBlacklist &blacklist,
+HTTPRequest & client_request,
+HTTPResponse &response,iosockstream &ss)
 {
   // Log log;
   // log.log_print("开始");
@@ -123,7 +125,7 @@ void getServerResponse(HTTPCache &cache,HTTPBlacklist &blacklist,HTTPRequest & c
     HTTPResponse response404;
 		response404.setResponseCode(404);
 		response404.setProtocol("HTTP/1.0");
-		response404.setPayload("Not Found");
+		response404.setPayload("<h1 align=\"center\">Not Found</h1>");
     cout << "404" << endl;
     ss  << response404 << endl;
     ss.flush();
@@ -143,20 +145,19 @@ void getServerResponse(HTTPCache &cache,HTTPBlacklist &blacklist,HTTPRequest & c
      * 改正：
      *  以后对与各种请求要对错误进行处理
      */
-  HTTPResponse response;
   /**
    * 里程碑 2
    * 先检查是否有一个有效的缓存，如果有的
    * 直接将缓存中的回应返回
    */
 
-  // if(cache.containsCacheEntry(client_request,response))
-  // {
-  //   cout << "存在缓存" << endl;
-  //   ss  << response << endl;
-  //   ss.flush();
-  //   return;
-  // }
+  if(cache.containsCacheEntry(client_request,response))
+  {
+    cout << "存在缓存" << endl;
+    ss  << response << endl;
+    ss.flush();
+    return;
+  }
   
 
   serverSs << client_request << endl;//这里是导致出错的原因
@@ -171,19 +172,18 @@ void getServerResponse(HTTPCache &cache,HTTPBlacklist &blacklist,HTTPRequest & c
   if(client_request.getMethod() != "HEAD")
     response.ingestPayload(serverSs);
 
-  /**
-   * 里程碑2 检查是否可以缓存
-   * 如果可以就加入缓存
-   */
-  // if(cache.shouldCache(client_request,response))
-  // {
-  //   cout << "可以缓存" << endl;
-  //   cache.cacheEntry(client_request,response);
-  // }
 
   // cout << response << endl;
   ss  << response << endl;
   ss.flush();
+
+  /**
+   * 里程碑2 检查是否可以缓存
+   * 如果可以就加入缓存
+   * 这里过程太长了还是怎么样，这个过程没有回应，客户端就返回了
+   * 导致了出错
+   */
+
 }
 
 
@@ -221,18 +221,34 @@ void HTTPRequestHandler::serviceRequest(const pair<int, string>& connection) thr
   else
   {
     cout << oslock 
+    << endl
     << "其他请求" << endl
     << client_request.getMethod() << " "
     << client_request.getURL() << " "
     << client_request.getProtocol() 
     << endl << osunlock;
   }
+  HTTPResponse response;
   
   /*需要获取服务器的回应，并且发送回客户端**/
-  getServerResponse(cache,blacklist,client_request,ss);
+  getServerResponse(cache,blacklist,client_request,response,ss);
+  if(cache.shouldCache(client_request,response))
+  {
+    cout << "可以缓存" << endl;
+    cache.cacheEntry(client_request,response);
+
+    cout << "缓存成功" << endl;
+  }else
+  {
+    cout << "不可以缓存" << endl;
+  }
 }
 
 // the following two methods needs to be completed 
 // once you incorporate your HTTPCache into your HTTPRequestHandler
-void HTTPRequestHandler::clearCache() {}
-void HTTPRequestHandler::setCacheMaxAge(long maxAge) {}
+void HTTPRequestHandler::clearCache() {
+  cache.clear();
+}
+void HTTPRequestHandler::setCacheMaxAge(long maxAge) {
+  cache.setMaxAge(maxAge);
+}

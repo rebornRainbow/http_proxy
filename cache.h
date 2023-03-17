@@ -40,7 +40,13 @@ class HTTPCache {
    * @param request 
    * @param response 
    * @return true 
+   * 如果缓存中有这个项目，就将response设置成回应的内容
+   * 通过MAX-AGE属性加上时间来判断当前的缓存是否有效
    * @return false 
+   * 没有将返回失败
+   * 
+   * 如果有但是失效也返回失败，并且会将换缓存中失效的缓存删除
+   * 
    */
   bool containsCacheEntry(const HTTPRequest& request, HTTPResponse& response) const;
   /**

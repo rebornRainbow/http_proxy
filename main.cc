@@ -20,6 +20,7 @@ using namespace std;
  * Simple fault handler that occasionally gets invoked because
  * some pipe is broken.  We actually just print a short message but
  * otherwise allow execution to continue.
+ * 管道崩溃了
  */
 static void alertOfBrokenPipe(int unused)
 {

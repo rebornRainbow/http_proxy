@@ -155,6 +155,8 @@ void HTTPCache::cacheEntry(const HTTPRequest& request, const HTTPResponse& respo
     cacheDirectory + "/" + 
     requestHash + "/" + 
     kCreateHeader + getCurrentTime() + kExpirationHeader + getExpirationTime(response.getTTL());
+
+  cout << "目录" << cacheEntryName << endl;
   ofstream outfile(cacheEntryName.c_str(), ios::out | ios::binary);
   if (!outfile)
     throw HTTPCacheAccessException("Unable to open the cache entry named \"" + cacheEntryName + "\" for writing.");
