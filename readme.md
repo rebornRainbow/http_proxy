@@ -94,7 +94,7 @@ class HTTPBadRequestException: public HTTPProxyException {
 
 匹配黑名单网站的正则表达式写在blocked-domains.txt文件中
 ```python
-(.*)web.stanford.edu(.*)
+(.*)\.microsoft.com(.*)#匹配所有含有microsoft.com的url
 ```
 
 ()：是正则中的分组
