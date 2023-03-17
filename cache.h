@@ -30,9 +30,34 @@ class HTTPCache {
  * on the relevant request before calling.
  * 接下来的三个函数完成了你期待的事情，除了他们不是线程安全的，，在多线程的环境中，
  * 你应该需要在调用前，在相关的请求上加锁
+ * 这里之后需要
  */
+
+
+  /**
+   * @brief 
+   *  主要检查当前的cache是否含有这个请求
+   * @param request 
+   * @param response 
+   * @return true 
+   * @return false 
+   */
   bool containsCacheEntry(const HTTPRequest& request, HTTPResponse& response) const;
+  /**
+   * @brief 
+   * 检查这个请求是否可以cache
+   * @param request 
+   * @param response 
+   * @return true 
+   * @return false 
+   */
   bool shouldCache(const HTTPRequest& request, const HTTPResponse& response) const;
+  /**
+   * @brief 
+   * 将请求添加到cache项
+   * @param request 
+   * @param response 
+   */
   void cacheEntry(const HTTPRequest& request, const HTTPResponse& response);
 
 /**

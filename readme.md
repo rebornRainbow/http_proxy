@@ -69,6 +69,68 @@ class HTTPBadRequestException: public HTTPProxyException {
 <div class="uw-hero-image uw-homepage-slider slide-31 darktext darktextmobile slide-order-0" data-id="31" style="background: url(&quot;https://uw-s3-cdn.s3.us-west-2.amazonaws.com/wp-content/uploads/sites/81/2023/03/10165533/03-11-22-macarthur-genius-desktopF.jpg&quot;) center center / cover no-repeat transparent;"><div class="mobile-image" style="background-image:url('https://uw-s3-cdn.s3.us-west-2.amazonaws.com/wp-content/uploads/sites/81/2023/03/10165553/03-11-22-macarthur-genius-mobileB.jpg')"></div></div>
 ```
 
-
 当前的代理还无法支持这种形式的数据，所以出现了错误
+
+解决方案：
+
+目前无法实现，估计需要支持https以后才能解决
+
+
+
+#### 里程碑2
+
+
+##### 黑名单
+实现依靠c++中的regex类
+
+这个类的使用需要我们知道正则表达式怎么书写
+
+这里有一个有趣的[正则练习网站](https://regexlearn.com/zh-cn/learn/regex101)
+这是一个简单的[正则练习的网站](https://tool.oschina.net/regex/)
+
+
+简单的说明
+这是简单的网站黑名单的例子
+
+匹配黑名单网站的正则表达式写在blocked-domains.txt文件中
+```python
+(.*)web.stanford.edu(.*)
+```
+
+()：是正则中的分组
+.*:表示匹配任意的字符串
+
+
+
+
+##### cache 设计（单线程版）
+
+
+
+
+主要需要三个方法
+
+1、检查当前的请求和回应是否应该cache？shouldCache
+```c++
+  return maxAge != 0 && //这是用来设置缓存时间的变量
+  request.getMethod() == "GET" && 
+  response.getResponseCode() == 200 && 
+  //上面两句表示我们只应该缓存成功GET的请求和他的回应
+  response.permitsCaching();
+  //上面的是检查服务器的请求是这个数据保是否可以缓存
+```
+
+
+2、当前是否有这个缓存？containsCacheEntry 
+
+缓存以文件的形式存在服务器上
+
+我们可以用二进制的方式打开文件，然后利用response的序列化功能得到所有的信息。
+
+
+3、将当前的请求和回应添加到缓存中 cacheEntry
+
+补充在http回应response中如果当前的数据头可以被缓存的话(存在"Cache-Control")，
+请求中会有一个"max-age="属性，这个属性标注了这个缓存可以存在的时间。
+
 

@@ -28,8 +28,8 @@ class Log
  */
 HTTPRequestHandler::HTTPRequestHandler()
 {
-
-  blacklist.addToBlacklist("./slink/blocked-domains.txt");
+  //初始化黑名单
+  blacklist.addToBlacklist("./blocked-domains.txt");
 }
 
 
@@ -100,20 +100,19 @@ void getServerResponse(HTTPCache &cache,HTTPBlacklist &blacklist,HTTPRequest & c
    * @brief 里程碑2
    * 检查访问的内容是否是黑名单的内容，
    * 如果是返回404
-   * 
    */
-    // if(!blacklist.serverIsAllowed(client_request.getURL()))
-    // {
-    //   //服务器打不开应该返回
-    //   HTTPResponse response404;
-    //   response404.setResponseCode(404);
-    //   response404.setProtocol("HTTP/1.0");
-    //   response404.setPayload("Forbidden Content");
-    //   cout << "禁止访问" << endl;
-    //   ss  << response404 << endl;
-    //   ss.flush();
-    //   return;
-    // }
+    if(!blacklist.serverIsAllowed(client_request.getURL()))
+    {
+      //服务器打不开应该返回
+      HTTPResponse response404;
+      response404.setResponseCode(404);
+      response404.setProtocol("HTTP/1.0");
+      response404.setPayload("<h1 align=\"center\">Forbidden Content</h1>");
+      cout << "禁止访问" << endl;
+      ss  << response404 << endl;
+      ss.flush();
+      return;
+    }
 
 
   int serverfd = createClientSocket(host,port);

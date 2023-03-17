@@ -64,7 +64,7 @@ void HTTPCache::clear() {
 
 /**
  * @brief 
- * 得到请求和回应后检查是否应该缓存
+ * 得到请求和回应后检查请求和回应是否应该缓存
  * @param request 
  * @param response 
  * @return true 
@@ -89,10 +89,16 @@ bool HTTPCache::shouldCache(const HTTPRequest& request, const HTTPResponse& resp
  */
 bool HTTPCache::containsCacheEntry(const HTTPRequest& request, HTTPResponse& response) const {
   if (maxAge == 0) return false; // maxAge of 0 means nothing is in the cache and we're not caching anything
+
   if (request.getMethod() != "GET") return false;
+
+  //将请求序列化
   string requestHash = hashRequestAsString(request);
+
+  //检查对应文件夹的内容
   bool exists = cacheEntryExists(requestHash);
   if (!exists) return false;
+  //检查对应文件夹下的文件
   string cachedFileName = getRequestHashCacheEntryName(requestHash);
   if (cachedFileName.empty()) return false;
   string fullCacheEntryName = cacheDirectory + "/" + requestHash + "/" + cachedFileName;
@@ -108,12 +114,15 @@ bool HTTPCache::containsCacheEntry(const HTTPRequest& request, HTTPResponse& res
     return false;
   }
 
+  //以二进制的方式打开这个缓存
   ifstream instream(fullCacheEntryName.c_str(), ios::in | ios::binary);
   if (!instream)
     throw HTTPCacheAccessException("Unable to open the cache entry named \"" +
                                    fullCacheEntryName + "\" for reading.");
   try {
+    //获得这个请求
     response.ingestResponseHeader(instream);
+    //获得这个负载
     response.ingestPayload(instream);
     cout << oslock << "     [Using cached copy of previous request for " << request.getURL() << ".]" << endl << osunlock;
     return true;
@@ -133,7 +142,9 @@ static string kExpirationHeader = "expires@";
  * @param response 
  */
 void HTTPCache::cacheEntry(const HTTPRequest& request, const HTTPResponse& response) {
+  //得到请求的序列化
   string requestHash = hashRequestAsString(request);
+  
   int ttl = response.getTTL();
   if (maxAge > 0) ttl = min<long>(maxAge, ttl);
   string unit = ttl == 1 ? "second" : "seconds";
@@ -156,12 +167,15 @@ size_t HTTPCache::hashRequest(const HTTPRequest& request) const {
   return hasher(serializeRequest(request));  
 }
 
+//将请求序列化
 string HTTPCache::hashRequestAsString(const HTTPRequest& request) const {
   ostringstream oss;
   oss << hashRequest(request);
   return oss.str();
 }
 
+
+//将请求序列化，所谓的序列化就是将类转成字符串的形式
 string HTTPCache::serializeRequest(const HTTPRequest& request) const {
   ostringstream oss;
   oss << request;
