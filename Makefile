@@ -4,6 +4,7 @@
 CXX = /usr/bin/g++
 DEPS = -MMD -MF $(@:.o=.d)
 
+
 # The CFLAGS variable sets compile flags for gcc:
 #  -g                         compile with debug information
 #  -Wall                      give all diagnostic warnings

@@ -12,6 +12,7 @@
 using namespace std;
 
 void HTTPBlacklist::addToBlacklist(const std::string& filename) throw (HTTPProxyException) {
+  //添加打到文件中
   ifstream infile(filename.c_str());
   if (infile.fail()) {
     ostringstream oss;
@@ -19,6 +20,7 @@ void HTTPBlacklist::addToBlacklist(const std::string& filename) throw (HTTPProxy
     throw HTTPProxyException(oss.str());
   }
 
+  //文件中的时正则形式的匹配
   while (true) {
     string line;
     getline(infile, line);
@@ -29,11 +31,12 @@ void HTTPBlacklist::addToBlacklist(const std::string& filename) throw (HTTPProxy
 }
 
 bool HTTPBlacklist::serverIsAllowed(const string& server) const {
+  //遍历每一种匹配
   for (const regex& re: blockedDomains) {
+    
     if (regex_match(server, re)) {
       return false;
     }
   }
-
   return true;
 }

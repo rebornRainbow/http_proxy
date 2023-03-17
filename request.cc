@@ -39,10 +39,12 @@ void HTTPRequest::ingestRequestLine(istream& instream) throw (HTTPBadRequestExce
   }
   port = kDefaultPort;
   pos = server.find(':');
+  // if(method != "CONNECT")
+  //   cout << "request log:" << method << path << protocol << endl;
   if (pos == string::npos) return;
   port = strtol(server.c_str() + pos + 1, NULL, 0); // assume port is well-formed
   server.erase(pos);
-  // cout << "request log:" << server << endl;
+  
 }
 
 void HTTPRequest::ingestHeader(istream& instream, const string& clientIPAddress) {
