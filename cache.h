@@ -98,9 +98,12 @@ class HTTPCache {
   void extractCreateAndExpireTimes(const std::string& cachedFileName, time_t& createTime, time_t& expirationTime) const;
   bool cachedEntryIsValid(const std::string& cachedFileName) const;
   std::string getHostname() const;
+  size_t convertToNum(const std::string hashRequest) const ;
 
   long maxAge;
   std::string cacheDirectory;
+
+  mutable std::mutex cacheLocks[997];  
 };
 
 #endif

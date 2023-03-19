@@ -27,6 +27,7 @@
 #include <dirent.h>
 #include <unistd.h>
 #include <pwd.h>
+#include <mutex>
 
 #include "cache.h"
 #include "request.h"
@@ -95,6 +96,10 @@ bool HTTPCache::containsCacheEntry(const HTTPRequest& request, HTTPResponse& res
   //将请求序列化
   string requestHash = hashRequestAsString(request);
 
+  size_t locksNum = convertToNum(requestHash)%997;
+
+  lock_guard<mutex> lg(cacheLocks[locksNum]);
+
   //检查对应文件夹的内容
   bool exists = cacheEntryExists(requestHash);
   if (!exists) return false;
@@ -145,6 +150,10 @@ void HTTPCache::cacheEntry(const HTTPRequest& request, const HTTPResponse& respo
   //得到请求的序列化
   string requestHash = hashRequestAsString(request);
   
+  size_t locksNum = convertToNum(requestHash)%997;
+
+  lock_guard<mutex> lg(cacheLocks[locksNum]);
+
   int ttl = response.getTTL();
   if (maxAge > 0) ttl = min<long>(maxAge, ttl);
   string unit = ttl == 1 ? "second" : "seconds";
@@ -323,4 +332,14 @@ string HTTPCache::getHostname() const {
   if (gethostname(name, HOST_NAME_MAX + 1) == -1) // function is thread safe
     throw HTTPCacheConfigException("Could not determine the name of your machine.");
   return name;
+}
+
+
+size_t HTTPCache::convertToNum(const string hashRequest) const
+{
+  stringstream ss;
+  ss << hashRequest;
+  size_t res = 0;
+  ss >> res;
+  return res;
 }

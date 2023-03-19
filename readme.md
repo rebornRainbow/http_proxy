@@ -156,3 +156,6 @@ class HTTPBadRequestException: public HTTPProxyException {
 测试缓存时需要把浏览器自己的缓存关闭，要不然浏览器自己都有缓存，不会
 向服务器发送请求
 
+
+
+#### 

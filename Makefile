@@ -39,6 +39,7 @@ SOURCES = \
 	header.cc \
 	payload.cc \
 	cache.cc \
+	thread-pool.cc \
 	blacklist.cc \
 	client-socket.cc
 
