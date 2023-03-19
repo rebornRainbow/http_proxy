@@ -158,6 +158,71 @@ class HTTPBadRequestException: public HTTPProxyException {
 
 
 
-#### 
+#### 多线程版本
 
-![](2023-03-19-14-11-18.png)
+这是效果演示
+![](2023-03-19-14-11-18.png)  
+
+
+使用线程池来实现多线程
+
+其中线程池是通过信号量加conditional_variable的方式实现的，
+
+有一个调度器
+
+维持一个任务队列和工人队列
+
+任务分为三个状态，待完成，完成中，完成
+
+工人也有两个状态 工作中和空闲中
+
+如果任务队列中有任务待完成，并且工人队列中有空闲工人，调度器就通知工人完成该任务，并将此任务从任务队列中剔除，工人也标记为工作中
+
+有新任务时需要添加到任务队列中，通知调度器有新任务
+
+如果有工人完成任务了，也需要通知调度器，有空闲工人了
+
+关键代码
+```c++
+      while(true)
+      {
+        worker_task[i].hasTask.wait();
+
+        terminate.end_m.lock();
+        if(terminate.end) 
+        {
+          // cout << i << "退出" << endl;
+          terminate.end_m.unlock();
+          break;
+        }
+        terminate.end_m.unlock();
+        //执行任务
+        // cout << i << "开始执行" << endl;
+        //cout << worker_task[i].task.size() << endl;
+        worker_task[i].task_m.lock();
+        auto mytask  = worker_task[i].task;
+        worker_task[i].task_m.unlock();
+        mytask();
+        //通知调度我有空了
+        wo_a_sh.add_workers_m.lock();
+        wo_a_sh.workers.push(i);
+        wo_a_sh.add_workers_m.unlock();
+        wo_a_sh.freeworkers.signal();
+        finish_tasks_m.lock();
+        ++finish_tasks;
+        finish_tasks_m.unlock();
+        finish_tasks_s.notify_all();
+      }
+```
+
+
+这是使用线程池的代码
+```c++
+ThreadPool threadpool(64);
+  threadpool.schedule([this,clientfd,clientIPAddress](){
+    requestHandler.serviceRequest(make_pair(clientfd, clientIPAddress));
+  });
+```
+
+
+
