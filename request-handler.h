@@ -10,6 +10,7 @@
 
 #include <utility>
 #include <string>
+#include <socket++/sockstream.h> // for sockbuf, iosockstream
 #include "blacklist.h"
 #include "cache.h"
 
@@ -20,11 +21,14 @@ public:
   void clearCache();
   void setCacheMaxAge(long maxAge);
 
+  void manageClientServerBridge(iosockstream& client, iosockstream& server);
+  std::string buildTunnelString(iosockstream& from, iosockstream& to)const;
   /**
    * @brief 
    * 添加一个黑名单的功能
    */
   private:
+    int createSocket(const HTTPRequest& request);
     HTTPBlacklist blacklist;
     HTTPCache cache;
 };

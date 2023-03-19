@@ -8,7 +8,8 @@
 #include "response.h"
 #include "ostreamlock.h"
 #include "client-socket.h"
-#include <socket++/sockstream.h> // for sockbuf, iosockstream
+#include "watchset.h"
+
 using namespace std;
 
 //打印信息的类
@@ -123,16 +124,6 @@ HTTPResponse &response,iosockstream &ss)
   }
   sockbuf sb(serverfd);
   iosockstream serverSs(&sb);//服务器的文件流
-  // log.log_print("创建完成");
-    /**
-     * 出错日记
-     * 目的是想服务器发送请求代码，
-     *  失败代码：terminate called after throwing an instance of 'sockerr'
-     * 原因：
-     *  原因在于上面服务器打开失败
-     * 改正：
-     *  以后对与各种请求要对错误进行处理
-     */
   /**
    * 里程碑 2
    * 先检查是否有一个有效的缓存，如果有的
@@ -190,8 +181,13 @@ void HTTPRequestHandler::serviceRequest(const pair<int, string>& connection) thr
   //尝试将所有的connect全部拦截，现在只支持CONNECT以外的方法。
   if(client_request.getMethod() == "CONNECT")
   {
+    int severfd = createSocket(client_request);
+    sockbuf sfb(severfd);
+    iosockstream serverss(&sfb);
+
+
     cout << oslock 
-    << "CONNECT失败" << endl
+    << "CONNECT" << endl
     << client_request.getMethod() << " "
     << client_request.getURL() << " "
     << client_request.getProtocol() 
@@ -199,9 +195,12 @@ void HTTPRequestHandler::serviceRequest(const pair<int, string>& connection) thr
     HTTPResponse response;
     response.setResponseCode(200);
     response.setProtocol("HTTP/1.0");
-    response.setPayload("暂不支持CONNECT方法" );
     ss << response;
     ss.flush();
+
+    manageClientServerBridge(serverss,ss);
+
+    cout << oslock << endl << osunlock;
     return;
   }
   else
@@ -237,4 +236,77 @@ void HTTPRequestHandler::clearCache() {
 }
 void HTTPRequestHandler::setCacheMaxAge(long maxAge) {
   cache.setMaxAge(maxAge);
+}
+
+const size_t kTimeout = 5;
+const size_t kBridgeBufferSize = 1 << 16;
+void HTTPRequestHandler::manageClientServerBridge(iosockstream& client, 
+                                                  iosockstream& server) {
+  // get embedded descriptors leading to client and origin server
+  int clientfd = client.rdbuf()->sd();
+  int serverfd = server.rdbuf()->sd();
+  
+  // monitor both descriptors for any activity 
+  ProxyWatchset watchset(kTimeout);
+  watchset.add(clientfd);
+  watchset.add(serverfd);
+  
+  // map each descriptor to its surrounding iosockstream and the one
+  // surrounding the descriptor on the other side of the bridge we're building 
+  map<int, pair<iosockstream *, iosockstream *>> streams;
+  streams[clientfd] = make_pair(&client, &server);
+  streams[serverfd] = make_pair(&server, &client);
+  cout << oslock << buildTunnelString(client, server) << "Establishing HTTPS tunnel" << endl << osunlock;
+  
+  while (!streams.empty()) {
+    int fd = watchset.wait();
+    if (fd == -1) break; // return value of -1 means we timed out
+    iosockstream& from = *streams[fd].first;
+    iosockstream& to = *streams[fd].second;
+    char buffer[kBridgeBufferSize];
+    from.read(buffer, 1); // attempt to read one byte to see if we have one
+    if (from.eof() || from.fail() || from.gcount() == 0) { 
+       // in here? that's because the watchset detected EOF instead of an unread byte
+       watchset.remove(fd); 
+       streams.erase(fd); 
+       continue; 
+    }
+    to.write(buffer, 1);
+    to.flush();
+    // TODO: additional code that you'll write to read all available bytes from the
+    // source and transport them to the other side of the bridge
+    while(true)
+    {
+      size_t readNum = from.readsome(buffer, sizeof(buffer));
+      if(readNum == 0) break;
+      if (from.eof() || from.fail() || from.gcount() == 0) { 
+        // in here? that's because the watchset detected EOF instead of an unread byte
+        watchset.remove(fd); 
+        streams.erase(fd); 
+        break;
+      }
+      to.write(buffer, readNum);
+      to.flush();
+      cout << oslock << buildTunnelString(from, to) << readNum << endl << osunlock; 
+    }
+    to.flush();
+  }
+  cout << oslock << buildTunnelString(client, server) << "Tearing down HTTPS tunnel." << endl << osunlock;
+}
+
+string HTTPRequestHandler::buildTunnelString(iosockstream& from, iosockstream& to) const {
+  return "[" + to_string(from.rdbuf()->sd()) + " --> " + to_string(to.rdbuf()->sd()) + "]: ";
+}
+
+int HTTPRequestHandler::createSocket(const HTTPRequest& request) {
+    int socketD = createClientSocket(request.getServer(), request.getPort());
+        
+    if (socketD == kClientSocketError) {
+        cerr << "Server could not be reached."<<endl;
+        cerr << "Abborting"<<endl;
+
+    }
+
+    return socketD;
+    
 }

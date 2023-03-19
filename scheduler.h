@@ -10,9 +10,11 @@
 #define _scheduler_
 #include <string>
 #include "request-handler.h"
+#include "thread-pool.h"
 
 class HTTPProxyScheduler {
  public:
+  HTTPProxyScheduler();
   void setProxy(const std::string& server, unsigned short port);
   void clearCache() { requestHandler.clearCache(); }
   void setCacheMaxAge(long maxAge) { requestHandler.setCacheMaxAge(maxAge); }
@@ -20,6 +22,7 @@ class HTTPProxyScheduler {
   
  private:
   HTTPRequestHandler requestHandler;
+  ThreadPool threadpool;
 };
 
 #endif
