@@ -12,13 +12,17 @@
 
 using namespace std;
 
+#define DEBUG
+
 //打印信息的类
 class Log
 {
   public:
    void log_print(string content)
    {
+#ifdef DEBUG
      cout << oslock << "this is log content:" << content << endl << osunlock;
+#endif
    }
 };
 
@@ -100,7 +104,9 @@ HTTPResponse &response,iosockstream &ss)
       response404.setResponseCode(404);
       response404.setProtocol("HTTP/1.0");
       response404.setPayload("<h1 align=\"center\">Forbidden Content</h1>");
+// #ifdef DEBUG
       cout << oslock << "禁止访问" << osunlock <<endl;
+// #endif
       ss  << response404 << endl;
       ss.flush();
       return;
@@ -116,6 +122,7 @@ HTTPResponse &response,iosockstream &ss)
 		response404.setResponseCode(404);
 		response404.setProtocol("HTTP/1.0");
 		response404.setPayload("<h1 align=\"center\">Not Found</h1>");
+
     cout << oslock << "404" << endl << osunlock;
     ss  << response404 << endl;
     ss.flush();
@@ -132,7 +139,9 @@ HTTPResponse &response,iosockstream &ss)
 
   if(cache.containsCacheEntry(client_request,response))
   {
+#ifdef DEBUG
     cout << oslock<< "存在缓存" << endl << osunlock;
+#endif
     ss  << response << endl;
     ss.flush();
     return;
@@ -185,13 +194,14 @@ void HTTPRequestHandler::serviceRequest(const pair<int, string>& connection) thr
     sockbuf sfb(severfd);
     iosockstream serverss(&sfb);
 
-
+#ifdef DEBUG
     cout << oslock 
     << "CONNECT" << endl
     << client_request.getMethod() << " "
     << client_request.getURL() << " "
     << client_request.getProtocol() 
     << endl << osunlock;
+#endif
     HTTPResponse response;
     response.setResponseCode(200);
     response.setProtocol("HTTP/1.0");
@@ -199,12 +209,14 @@ void HTTPRequestHandler::serviceRequest(const pair<int, string>& connection) thr
     ss.flush();
 
     manageClientServerBridge(serverss,ss);
-
+#ifdef DEBUG
     cout << oslock << endl << osunlock;
+#endif
     return;
   }
   else
   {
+#ifdef DEBUG
     cout << oslock 
     << endl
     << "其他请求" << endl
@@ -212,6 +224,7 @@ void HTTPRequestHandler::serviceRequest(const pair<int, string>& connection) thr
     << client_request.getURL() << " "
     << client_request.getProtocol() 
     << endl << osunlock;
+#endif
   }
   HTTPResponse response;
   
@@ -219,13 +232,18 @@ void HTTPRequestHandler::serviceRequest(const pair<int, string>& connection) thr
   getServerResponse(cache,blacklist,client_request,response,ss);
   if(cache.shouldCache(client_request,response))
   {
+#ifdef DEBUG
     cout << oslock << "可以缓存" << endl << osunlock;
+#endif
     cache.cacheEntry(client_request,response);
-
+#ifdef DEBUG
     cout << oslock << "缓存成功" << endl << osunlock;
+#endif
   }else
   {
+#ifdef DEBUG
     cout << oslock << "不可以缓存" << endl << osunlock;
+#endif
   }
 }
 
@@ -256,7 +274,9 @@ void HTTPRequestHandler::manageClientServerBridge(iosockstream& client,
   map<int, pair<iosockstream *, iosockstream *>> streams;
   streams[clientfd] = make_pair(&client, &server);
   streams[serverfd] = make_pair(&server, &client);
+#ifdef DEBUG
   cout << oslock << buildTunnelString(client, server) << "Establishing HTTPS tunnel" << endl << osunlock;
+#endif
   
   while (!streams.empty()) {
     int fd = watchset.wait();
@@ -287,11 +307,15 @@ void HTTPRequestHandler::manageClientServerBridge(iosockstream& client,
       }
       to.write(buffer, readNum);
       to.flush();
+#ifdef DEBUG
       cout << oslock << buildTunnelString(from, to) << readNum << endl << osunlock; 
+#endif
     }
     to.flush();
   }
+#ifdef DEBUG
   cout << oslock << buildTunnelString(client, server) << "Tearing down HTTPS tunnel." << endl << osunlock;
+#endif
 }
 
 string HTTPRequestHandler::buildTunnelString(iosockstream& from, iosockstream& to) const {
