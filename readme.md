@@ -281,3 +281,9 @@ ThreadPool threadpool(64);
 
 在多线程的加持下，即便是1080p的视频也是相当的流畅
 ![](2023-03-19-23-17-48.png)
+
+#### 使用方法:
+需要./proxy和blocked-domains.txt两个文件
+
+blocked-domains.txt
+  记录了禁止访问的域名的正则

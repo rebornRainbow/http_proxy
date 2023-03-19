@@ -7,3 +7,4 @@ microsoft.com
 (.*)\.microsoft.com
 blacklisted.cs110-proxy.jerrycainjr.com
 (.*)web.stanford.edu(.*)
+(.*).iqiyi.com(.*)

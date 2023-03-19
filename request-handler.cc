@@ -12,7 +12,7 @@
 
 using namespace std;
 
-#define DEBUG
+// #define DEBUG
 
 //打印信息的类
 class Log
@@ -92,25 +92,7 @@ HTTPResponse &response,iosockstream &ss)
   unsigned short port = client_request.getPort();
   // log.log_print(host);
 
-  /**
-   * @brief 里程碑2
-   * 检查访问的内容是否是黑名单的内容，
-   * 如果是返回404
-   */
-    if(!blacklist.serverIsAllowed(client_request.getURL()))
-    {
-      //服务器打不开应该返回
-      HTTPResponse response404;
-      response404.setResponseCode(404);
-      response404.setProtocol("HTTP/1.0");
-      response404.setPayload("<h1 align=\"center\">Forbidden Content</h1>");
-// #ifdef DEBUG
-      cout << oslock << "禁止访问" << osunlock <<endl;
-// #endif
-      ss  << response404 << endl;
-      ss.flush();
-      return;
-    }
+
 
 
   int serverfd = createClientSocket(host,port);
@@ -185,6 +167,30 @@ void HTTPRequestHandler::serviceRequest(const pair<int, string>& connection) thr
   iosockstream ss(&sb);
   /*这是获取客户端的请求，为了获取真正的回应要吧这个转给请求的服务器*/
   getClientRequest(connection,client_request,ss);
+
+
+
+
+    /**
+   * @brief 里程碑2
+   * 检查访问的内容是否是黑名单的内容，
+   * 如果是返回404
+   */
+    if(!blacklist.serverIsAllowed(client_request.getURL()))
+    {
+      //服务器打不开应该返回
+      HTTPResponse response404;
+      response404.setResponseCode(404);
+      response404.setProtocol("HTTP/1.0");
+      response404.setPayload("<h1 align=\"center\">Forbidden Content</h1>");
+// #ifdef DEBUG
+      cout << oslock << "禁止访问" << osunlock <<endl;
+// #endif
+      ss  << response404 << endl;
+      ss.flush();
+      return;
+    }
+
 
 
   //尝试将所有的connect全部拦截，现在只支持CONNECT以外的方法。
