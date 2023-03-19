@@ -5,13 +5,14 @@
  */
 
 #include "scheduler.h"
-#include "thread-pool.h"
+
 #include <utility>
 using namespace std;
 
+HTTPProxyScheduler::HTTPProxyScheduler():threadpool(64){};
+
 void HTTPProxyScheduler::scheduleRequest(int clientfd, const string& clientIPAddress) throw () {
   // 让请求处理器处理请求
-  ThreadPool threadpool(64);
   threadpool.schedule([this,clientfd,clientIPAddress](){
     requestHandler.serviceRequest(make_pair(clientfd, clientIPAddress));
   });
