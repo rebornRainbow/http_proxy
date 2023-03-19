@@ -17,7 +17,7 @@ class Log
   public:
    void log_print(string content)
    {
-     cout << "this is log content:" << content << endl;
+     cout << oslock << "this is log content:" << content << endl << osunlock;
    }
 };
 
@@ -45,10 +45,8 @@ void getClientRequest(const pair<int, string>& connection,
   iosockstream &ss)
 {
   
-  // cout << "处理之前这是获取到的请求" << client_request << endl;
-  /*这是获取客户端的请求，为了获取真正的回应要吧这个转给请求的服务器*/
-  // 在获取客户端的请求行时需要捕获错误
-  
+
+  // 在获取客户端的请求行时需要捕获错误  
   try{
 		client_request.ingestRequestLine(ss);
 	} catch (const HTTPBadRequestException& hpe) {
@@ -72,9 +70,7 @@ void getClientRequest(const pair<int, string>& connection,
       urls += ","+connection.second;
       client_request.addHeader("x-forwarded-for",urls);
     }
-  // cout << "处理之后这是获取到的请求" << client_request << endl;
-  
-  // cout << client_request.getServer() << endl;
+
 }
 
 
@@ -87,13 +83,6 @@ HTTPResponse &response,iosockstream &ss)
   //创建客户端的文件描述符号
   
 
-  // cout << oslock 
-  // << client_request.getMethod() << " "
-  // << client_request.getPath() << " "
-  // << client_request.getProtocol() 
-  // << endl << osunlock;
-
-  // cout << "打开成功!!!\n" << endl;
   string host = client_request.getServer();
   unsigned short port = client_request.getPort();
   // log.log_print(host);
@@ -110,7 +99,7 @@ HTTPResponse &response,iosockstream &ss)
       response404.setResponseCode(404);
       response404.setProtocol("HTTP/1.0");
       response404.setPayload("<h1 align=\"center\">Forbidden Content</h1>");
-      cout << "禁止访问" << endl;
+      cout << oslock << "禁止访问" << osunlock <<endl;
       ss  << response404 << endl;
       ss.flush();
       return;
@@ -126,13 +115,12 @@ HTTPResponse &response,iosockstream &ss)
 		response404.setResponseCode(404);
 		response404.setProtocol("HTTP/1.0");
 		response404.setPayload("<h1 align=\"center\">Not Found</h1>");
-    cout << "404" << endl;
+    cout << oslock << "404" << endl << osunlock;
     ss  << response404 << endl;
     ss.flush();
     return;
 
   }
-  // cout << "数字是" <<serverfd << endl;
   sockbuf sb(serverfd);
   iosockstream serverSs(&sb);//服务器的文件流
   // log.log_print("创建完成");
@@ -153,7 +141,7 @@ HTTPResponse &response,iosockstream &ss)
 
   if(cache.containsCacheEntry(client_request,response))
   {
-    cout << "存在缓存" << endl;
+    cout << oslock<< "存在缓存" << endl << osunlock;
     ss  << response << endl;
     ss.flush();
     return;
@@ -172,8 +160,6 @@ HTTPResponse &response,iosockstream &ss)
   if(client_request.getMethod() != "HEAD")
     response.ingestPayload(serverSs);
 
-
-  // cout << response << endl;
   ss  << response << endl;
   ss.flush();
 
@@ -234,13 +220,13 @@ void HTTPRequestHandler::serviceRequest(const pair<int, string>& connection) thr
   getServerResponse(cache,blacklist,client_request,response,ss);
   if(cache.shouldCache(client_request,response))
   {
-    cout << "可以缓存" << endl;
+    cout << oslock << "可以缓存" << endl << osunlock;
     cache.cacheEntry(client_request,response);
 
-    cout << "缓存成功" << endl;
+    cout << oslock << "缓存成功" << endl << osunlock;
   }else
   {
-    cout << "不可以缓存" << endl;
+    cout << oslock << "不可以缓存" << endl << osunlock;
   }
 }
 
