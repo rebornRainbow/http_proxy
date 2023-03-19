@@ -225,4 +225,35 @@ ThreadPool threadpool(64);
 ```
 
 
+使用多线程时需要注意，这里的cache作为多个线程共同使用的资源，要避免出现race condition，
+
+这里的做法是使用多个锁，997个(这是一个素数)
+
+然后将每个请求hash到对应的哈希值hashNum，然后将hashNum%997.通常素数搭配哈希使用时效果会更加好。
+
+
+然后再请求资源时，需要先请求对应的锁
+
+``` c++
+//将请求转化成哈希值
+  size_t HTTPCache::hashRequest(const HTTPRequest& request) const {
+  hash<string> hasher;
+  return hasher(serializeRequest(request));  
+  }
+
+//将请求转化成哈希值
+  string HTTPCache::hashRequestAsString(const HTTPRequest& request) const {
+  ostringstream oss;
+  oss << hashRequest(request);
+  return oss.str();
+  }
+
+  string requestHash = hashRequestAsString(request);
+  
+  size_t locksNum = convertToNum(requestHash)%997;
+
+  lock_guard<mutex> lg(cacheLocks[locksNum]);
+```
+
+#### 对https(CONNECT的支持)
 
