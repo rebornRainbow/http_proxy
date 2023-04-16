@@ -71,6 +71,10 @@ void HTTPProxy::acceptAndProxyRequest() throw (HTTPProxyException) {
       ("Call to accept failed to return a valid client socket.");
   }
   
+  cout << "罗彪完成" << endl;
+  cout << "罗彪电话:18961126636" << endl;
+  cout << "罗彪qq:2143572870@qq.com" << endl;
+
   //让调度其器调度请求
   const char *clientIPAddress = getClientIPAddress(&clientAddr);
   try {
