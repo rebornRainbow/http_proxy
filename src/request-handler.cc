@@ -34,7 +34,7 @@ class Log
 HTTPRequestHandler::HTTPRequestHandler()
 {
   //初始化黑名单
-  blacklist.addToBlacklist("./blocked-domains.txt");
+  blacklist.addToBlacklist("../config/blocked-domains.txt");
 }
 
 

@@ -10,7 +10,7 @@
 
 #include <utility>
 #include <string>
-#include <socket++/sockstream.h> // for sockbuf, iosockstream
+#include "../socket++/sockstream.h" // for sockbuf, iosockstream
 #include "blacklist.h"
 #include "cache.h"
 
